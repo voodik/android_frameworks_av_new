@@ -52,6 +52,8 @@ Engine::~Engine()
 {
 }
 
+int8_t hdmi_prop = property_get_bool("persist.hdmi.audioforce", 0);
+
 void Engine::setObserver(AudioPolicyManagerObserver *observer)
 {
     ALOG_ASSERT(observer != NULL, "Invalid Audio Policy Manager observer");
@@ -509,6 +511,9 @@ audio_devices_t Engine::getDeviceForStrategyInt(routing_strategy strategy,
         }
         if (device2 == AUDIO_DEVICE_NONE) {
             device2 = availableOutputDevicesType & AUDIO_DEVICE_OUT_USB_DEVICE;
+	if (hdmi_prop) {
+            device2 |= (availableOutputDevicesType & AUDIO_DEVICE_OUT_SPEAKER);
+        }
         }
         if (device2 == AUDIO_DEVICE_NONE) {
             device2 = availableOutputDevicesType & AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET;
@@ -634,7 +639,9 @@ audio_devices_t Engine::getDeviceForInputSource(audio_source_t inputSource) cons
             break;
 
         case AUDIO_POLICY_FORCE_SPEAKER:
-            if (availableDeviceTypes & AUDIO_DEVICE_IN_BACK_MIC) {
+            if (availableDeviceTypes & AUDIO_DEVICE_IN_USB_DEVICE) {
+                device = AUDIO_DEVICE_IN_USB_DEVICE;
+            } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BACK_MIC) {
                 device = AUDIO_DEVICE_IN_BACK_MIC;
             } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BUILTIN_MIC) {
                 device = AUDIO_DEVICE_IN_BUILTIN_MIC;
@@ -658,7 +665,9 @@ audio_devices_t Engine::getDeviceForInputSource(audio_source_t inputSource) cons
         }
         break;
     case AUDIO_SOURCE_CAMCORDER:
-        if (availableDeviceTypes & AUDIO_DEVICE_IN_BACK_MIC) {
+        if (availableDeviceTypes & AUDIO_DEVICE_IN_USB_DEVICE) {
+            device = AUDIO_DEVICE_IN_USB_DEVICE;
+        } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BACK_MIC) {
             device = AUDIO_DEVICE_IN_BACK_MIC;
         } else if (availableDeviceTypes & AUDIO_DEVICE_IN_BUILTIN_MIC) {
             device = AUDIO_DEVICE_IN_BUILTIN_MIC;
